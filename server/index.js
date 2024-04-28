@@ -15,7 +15,10 @@ activeGames = new Map()
 
 const socketServer = new Server(server,
   {
-    cors: '*', // allow connection from any origin
+    cors: {
+      origins: "*:*",
+      methods: ["GET", "POST"]
+    }
   });
 
 function startGame() {
