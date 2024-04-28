@@ -1,9 +1,10 @@
 {
-  "name": "server",
+  "name": "a4-stephenfanning",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon server.js"
+    "start": "node server/index.js",
+    "build": "npm install && cd client && npm install && npm run build"
   },
   "keywords": [],
   "author": "",
@@ -11,10 +12,11 @@
   "description": "",
   "dependencies": {
     "express": "^4.19.2",
+    "mongodb": "^6.5.0",
     "socket.io": "^4.7.5",
     "uuid": "^9.0.1"
   },
-  "devDependencies": {
-    "nodemon": "^3.1.0"
+  "engines": {
+    "node": "20.11.1"
   }
 }

@@ -37,6 +37,7 @@ export default function Game ()
     function endGame()
     {
         setGameActive(false)
+        setDrawOffered(false)
     }
 
     function resign()
