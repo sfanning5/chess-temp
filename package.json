@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node server/index.js",
+    "start": "nodemon server/index.js",
     "build": "npm install && cd client && npm install && npm run build"
   },
   "keywords": [],
@@ -11,6 +11,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bulma": "^1.0.0",
     "express": "^4.19.2",
     "mongodb": "^6.5.0",
     "socket.io": "^4.7.5",
@@ -18,5 +19,8 @@
   },
   "engines": {
     "node": "20.11.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   }
 }

@@ -12,12 +12,14 @@ export default function Game ()
     const [gameActive, setGameActive] = useState(false)
     const [gameData, setGameData] = useState(null)
     const [drawOffered, setDrawOffered] = useState(false)
+    const [displayText, setDisplayText] = useState("Start of game")
 
     function playMove(move)
     {
         try {
             let newMove = chess.move(move)
             setBoardPos(chess.fen())
+            setDisplayText(newMove.lan)
 
             if (chess.isCheckmate()) {
                 socket.emit("checkmate", gameData.id)
@@ -67,6 +69,7 @@ export default function Game ()
         socket.on("start game", (gameData) => {
             setGameData(gameData)
             setPlayerColor(gameData.playerColor)
+            setDisplayText("Start of game")
             setGameActive(true)
             chess.reset()
             setBoardPos(chess.fen())
@@ -117,23 +120,65 @@ export default function Game ()
         }
     }
 
+    const boardWrapperStyle = {
+        width: '500px',
+        height: '500px',
+        border: "10px solid #0074D9",
+        borderRadius: "10px"
+    }
+
+    const boardStyle = {
+        border: "10px solid white",
+    }
+
     const buttonStyle = {
-        width: '400px', 
-        height: '100px',
-        fontSize: '18px', 
-    };
+        width: "240px",
+        fontSize: '16px', 
+        borderRadius: '10px',
+        marginTop: "10px",
+        paddingTop: "8px"
+    }
+
+    const flexStyle = {
+        gap: "20px",
+        justifyContent: 'center',
+        marginLeft: "-5px"
+    }
+
+    const textStyle = {
+        color: "#0074D9",
+        fontSize: "30px",
+        fontWeight: "bold"
+    }
 
     return (
         <>
-            <div>
-                <Chessboard position={boardPos} onPieceDrop={onDrop} animationDuration={0} boardOrientation={playerColor} />
-            </div>
-            <div style={{ textAlign: 'center' }}>
-                <button style={buttonStyle} type="button" onClick={resign}>Resign</button>
-                <button style={buttonStyle} type="button" onClick={offerDraw}>Offer Draw</button>
-                {drawOffered && (
-                    <button style={buttonStyle} type="button" onClick={acceptDraw}>Draw offered. Accept?</button>
-                    )}
+            <div style={{marginTop: "30px"}}>
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <text style={textStyle}>{displayText}</text>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <div style={boardWrapperStyle}>
+                        <div style={boardStyle}>
+                            <Chessboard position={boardPos} onPieceDrop={onDrop} animationDuration={0} boardOrientation={playerColor} />
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ width: '500px', height: '500px'}}>
+                        <span className="flex two" style={flexStyle}>
+                            <button style={buttonStyle} type="button" onClick={resign}>Resign</button>
+                            <button style={buttonStyle} type="button" onClick={offerDraw}>Offer Draw</button>
+                        </span>
+                        <span className="flex one" style={flexStyle}>
+                            {drawOffered && (
+                                <button style={buttonStyle} type="button" onClick={acceptDraw}>Draw offered. Accept?</button>
+                            )}
+                        </span>
+                    </div>
+                </div>`
             </div>
         </>
     )
