@@ -4,6 +4,26 @@ import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
 import socket from './socket';
 
+function UsernameDisplay(props)
+{
+    const { username, indicateTurn } = props
+
+    const backgroundColor = indicateTurn ? "#CCE3F7" : null
+
+    return (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: "4px", marginBottom: "4px" }}>
+            <span className="flex two" style={{ paddingTop: "2.5px", marginLeft: "0px", width: "500px", height: "35px", backgroundColor: backgroundColor, borderRadius: "10px"}}>
+                <text className="username-text">{username}</text>
+                <span style={{ textAlign: "right", paddingRight: "10px", paddingLeft: "1px"}}>
+                    <text style={{ color: "#2ECC40" }} className="username-text">{"0"}</text>
+                    <text style={{ color: "#333333" }} className="username-text">{"/0/"}</text>
+                    <text style={{ color: "#FF4136" }} className="username-text">{"0"}</text>
+                </span>
+            </span>
+        </div>
+    )
+}
+
 export default function Game ()
 {
     let chess = useMemo(() => new Chess(), [])
@@ -13,6 +33,7 @@ export default function Game ()
     const [gameData, setGameData] = useState(null)
     const [drawOffered, setDrawOffered] = useState(false)
     const [displayText, setDisplayText] = useState("Start of game")
+    const [opponentName, setOpponentName] = useState("No Opponent")
 
     function playMove(move)
     {
@@ -69,6 +90,7 @@ export default function Game ()
         socket.on("start game", (gameData) => {
             setGameData(gameData)
             setPlayerColor(gameData.playerColor)
+            setOpponentName(gameData.playerColor === "white" ? gameData.black : gameData.white)
             setDisplayText("Start of game")
             setGameActive(true)
             chess.reset()
@@ -145,38 +167,42 @@ export default function Game ()
         marginLeft: "-5px"
     }
 
-    const textStyle = {
-        color: "#0074D9",
-        fontSize: "30px",
-        fontWeight: "bold"
-    }
+    // const headerStyle = {
+    //     color: "#0074D9",
+    //     fontSize: "30px",
+    //     fontWeight: "bold"
+    // }
 
     return (
         <>
-            <div style={{marginTop: "30px"}}>
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <text style={textStyle}>{displayText}</text>
+            <div style={{ marginTop: "10px", justifyContent: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: "0px"}}>
+                    <text className= "header-text">Play Chess</text>
                 </div>
 
+                <UsernameDisplay username={opponentName} indicateTurn={gameActive && chess.turn() !== playerColor[0]} />
+
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    <div style={boardWrapperStyle}>
-                        <div style={boardStyle}>
+                    <div className="board-wrapper">
+                        <div className="board">
                             <Chessboard position={boardPos} onPieceDrop={onDrop} animationDuration={0} boardOrientation={playerColor} />
                         </div>
                     </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <UsernameDisplay username={socket.id} indicateTurn={gameActive && chess.turn() === playerColor[0]} />
+
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: "-10px" }}>
                     <div style={{ width: '500px', height: '500px'}}>
                         <span className="flex two" style={flexStyle}>
-                            <button style={buttonStyle} type="button" onClick={resign}>Resign</button>
-                            <button style={buttonStyle} type="button" onClick={offerDraw}>Offer Draw</button>
+                            <button className="button" type="button" onClick={resign}>Resign</button>
+                            <button className="button" type="button" onClick={drawOffered ? acceptDraw : offerDraw}>{drawOffered ? "Draw offered. Accept?" : "Offer Draw"}</button>
                         </span>
-                        <span className="flex one" style={flexStyle}>
-                            {drawOffered && (
-                                <button style={buttonStyle} type="button" onClick={acceptDraw}>Draw offered. Accept?</button>
+                        {/* <span className="flex one" style={flexStyle}>
+                            {false && (
+                                <button style={{marginTop: "0px" }} className="button" type="button" onClick={acceptDraw}>Draw offered. Accept?</button>
                             )}
-                        </span>
+                        </span> */}
                     </div>
                 </div>`
             </div>

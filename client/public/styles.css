@@ -1,0 +1,29 @@
+.header-text {
+    color: #0074D9;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.username-text {
+    color: #0074D9;
+    font-size: 20px;
+}
+
+.board-wrapper {
+    width: 500px;
+    height: 500px;
+    border: 10px solid #0074D9;
+    border-radius: 10px;
+}
+
+.board {
+    border: 10px solid white;
+}
+
+.button {
+    width: 240px;
+    font-size: 16px;
+    border-radius: 10px;
+    margin-top: 10px;
+    padding-top: 8px;
+}
