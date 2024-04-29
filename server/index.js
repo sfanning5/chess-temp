@@ -9,6 +9,101 @@ const server = http.createServer(app);
 const port = process.env.PORT || 8080
 const path = require('path');
 
+// === DATABASE INTERACTION === //
+
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://tester:ubLpKcS1KNRdiZfc@cluster0.kty1d7h.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
+async function disconnectFromDB() {
+  await client.close();
+}
+
+async function connectoToDB() {
+  // Connect the client to the server	(optional starting in v4.7)
+  await client.connect();
+  // Send a ping to confirm a successful connection
+  await client.db("admin").command({ ping: 1 });
+  console.log("Pinged your deployment. You successfully connected to MongoDB!");
+}
+
+connectoToDB()
+
+process.on("SIGINT", async () => {
+  console.log("Closing...")
+  disconnectFromDB()
+  process.exit(0)
+})
+
+async function updateScore(username, score)
+{
+  const query = {username: username}
+  const document = await collection.findOne(query)
+  let wins = 0, draws = 0, losses = 0
+  if(score == 0)
+    losses++
+  else if(score == 0.5)
+    draws++
+  else if(score == 1)
+    wins++
+
+  if(document) // If user is in database
+  {
+    const update = {
+      $inc: {
+        wins: wins,
+        draws: draws,
+        losses: losses
+      }
+    }
+
+    await collection.updateOne(query, update)
+  }
+  else // If new user
+  {
+    const newDocument = {
+      username: username,
+      wins: wins,
+      draws: draws,
+      losses: losses
+    }
+
+    await collection.insertOne(newDocument)
+  }
+}
+
+async function getRecord(username)
+{
+  const query = { username: username }
+  const document = await collection.findOne(query)
+  if(document)
+  {
+    return document
+  }
+  else
+  {
+    return {
+      username: username,
+      wins: 0,
+      draws: 0,
+      losses: 0
+    }
+  }
+}
+
+
+// === GAMEPLAY INTERACTION === //
+
+const collection = client.db("chess").collection("records")
+
 let unpairedPlayers = []
 
 const openGames = new Map() // Sent to every player after a new game is posted/removed
@@ -31,13 +126,15 @@ function broadcastUpdate()
   })
 }
 
-function createGame(username, socket)
+async function createGame(username, socket)
 {
   // Inits game
   let gameData = {}
   gameData.id = uuidV4()
   console.log("Creating Game " + gameData.id)
   gameData.playerNames = [username]
+  let record = await getRecord(username)
+  gameData.records = [record]
 
   publicOpenGames.set(gameData.id, {...gameData}) // Stores copy of current data
 
@@ -66,14 +163,17 @@ function removeOpenGames(socketID)
     broadcastUpdate()
 }
 
-function startGame(gameID, socket, username) 
+async function startGame(gameID, socket, username) 
 {
   // Sets up game
   let publicGameData = publicOpenGames.get(gameID)
   let gameData = openGames.get(gameID)
 
   publicGameData.playerNames.push(username)
+  let record = await getRecord(username)
+  publicGameData.records.push(record)
 
+  gameData.records = publicGameData.records
   gameData.playerNames = publicGameData.playerNames
   gameData.players.push(socket)
 
@@ -114,6 +214,9 @@ function startGame(gameID, socket, username)
 }
 
 function makeMove(moveData, playerSocket) {
+  if (!activeGames.has(moveData.gameID))
+    return
+
   let gameData = activeGames.get(moveData.gameID)
   gameData.players.forEach(element => {
     if (element !== playerSocket) {
@@ -123,7 +226,8 @@ function makeMove(moveData, playerSocket) {
   });
 }
 
-function endGame(gameID, winner = null, resigned = null) {
+async function endGame(gameID, winner = null, resigned = null) {
+
   let gameData = activeGames.get(gameID)
   for (const soc of gameData.players)
   {
@@ -135,6 +239,18 @@ function endGame(gameID, winner = null, resigned = null) {
     gameData.players.forEach(element => {
       element.emit("checkmate")
     })
+
+    if(gameData.players[0].id == winner.id) // Player 0 won
+    {
+      await updateScore(gameData.playerNames[0], 1)
+      await updateScore(gameData.playerNames[1], 0)
+    }
+    else // Player 1 won
+    {
+      await updateScore(gameData.playerNames[0], 0)
+      await updateScore(gameData.playerNames[1], 1)
+    }
+
   }
   else if (resigned !== null) {
     gameData.players.forEach(element => {
@@ -142,13 +258,38 @@ function endGame(gameID, winner = null, resigned = null) {
       if (element !== resigned)
         element.emit("opponent resigns")
     })
+
+    if (gameData.players[0].id == resigned.id) // Player 0 resigned
+    {
+      await updateScore(gameData.playerNames[0], 0)
+      await updateScore(gameData.playerNames[1], 1)
+    }
+    else // Player 1 resigned
+    {
+      await updateScore(gameData.playerNames[0], 1)
+      await updateScore(gameData.playerNames[1], 0)
+    }
   }
   else // If draw
   {
     gameData.players.forEach(element => {
       element.emit("draw")
     })
+
+    await updateScore(gameData.playerNames[0], 0.5)
+    await updateScore(gameData.playerNames[1], 0.5)
   }
+
+  // Update records
+  let records = [await getRecord(gameData.playerNames[0]), await getRecord(gameData.playerNames[1])]
+  let publicGameData = { 
+    id: gameID,
+    playerNames: gameData.playerNames,
+    records: records
+  }
+  gameData.players.forEach(element => {
+    element.emit("update records", publicGameData)
+  })
 
   // Unpairs players
   gameData.players.forEach(element => {

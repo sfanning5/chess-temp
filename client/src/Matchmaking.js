@@ -25,7 +25,7 @@ function GameTable(props)
                 {games.map(gameData => (
                     <tr key={gameData.id}>
                         <td style={{ width: '80%' }}>{gameData.playerNames[0]}</td>
-                        <td style={{ width: '10%'}}><div style={{ marginRight:"-40px"}}><Statistics /></div></td>
+                        <td style={{ width: '10%'}}><div style={{ marginRight:"-40px"}}><Statistics record={gameData.records[0]} /></div></td>
                         <td style={{ width: '10%' }}><button onClick={() => { gameData.playerNames[0] === username ? closeGame(gameData) : joinGame(gameData)}} style={{ marginRight: "-30px" }} className="list-button">
                             {gameData.playerNames[0] === username ? "Close" : "Join"}</button>
                         </td>
