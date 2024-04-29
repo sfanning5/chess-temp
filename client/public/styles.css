@@ -9,6 +9,11 @@
     font-size: 20px;
 }
 
+.standard-text {
+    color: #333333;
+    font-size: 16px;
+}
+
 .board-wrapper {
     width: 500px;
     height: 500px;
@@ -26,4 +31,26 @@
     border-radius: 10px;
     margin-top: 10px;
     padding-top: 8px;
+}
+
+.list-button {
+    width: 80px;
+    font-size: 16px;
+    border-radius: 10px;
+}
+
+.card-outline {
+    border: 4px solid #0074D9;
+    background-color: #0074D9;
+    border-radius: 10px;
+}
+
+.card {
+    background-color: white;
+    border: 0px solid white;
+    border-radius: 6px;
+}
+
+.align-right {
+    text-align: right;
 }
