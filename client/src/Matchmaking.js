@@ -3,6 +3,8 @@ import GameContext from "./GameContext";
 import socket from './socket';
 import { Statistics } from "./Game";
 
+const emptyRecord = { username: "None", wins: 0, draws: 0, losses: 0
+ }
 function GameTable(props)
 {
     const { games, username } = props
@@ -40,6 +42,7 @@ export default function Matchmaking ()
 {
     const [gameCreated, setGameCreated] = useState(false)
     const [openGames, setOpenGames] = useState([])
+    const [playerRecord, setPlayerRecord] = useState(emptyRecord)
 
     const {page, setPage, gameData, setGameData, username} = useContext(GameContext)
 
@@ -70,7 +73,12 @@ export default function Matchmaking ()
             setPage("game")
         })
 
+        socket.on("update player record", (record) => {
+            setPlayerRecord(record)
+        })
+
         socket.emit("update matchmaking")
+        socket.emit("update player record", username)
 
     }, [])
 
@@ -78,7 +86,11 @@ export default function Matchmaking ()
         <>
             <div style={{ display: 'flex', flexDirection: "column", alignItems: "center", justifyContent: 'center', marginBottom: "0px" }}>
                 <span className="header-text">Find a Match</span>
-                <span style={{ marginTop: "-5px" }} className="username-text">{username}</span>
+
+                <div>
+                    <span style={{ marginTop: "-5px", marginRight: "5px"}} className="username-text">{username}</span>
+                    <span style={{ marginleft: "5px" }}><Statistics record={playerRecord} /></span>
+                </div>
 
                 <button onClick={createGame} disabled={gameCreated} style={{width: "240px", fontSize: "16px", borderRadius: "10px"}}>Create Game</button>
 

@@ -311,6 +311,12 @@ socketServer.on("connection", (socket) => {
   socket.on("update matchmaking", () => {
     socket.emit("updated matchmaking", [...publicOpenGames.values()]) // Updates game list
   })
+
+  socket.on("update player record", (username) => {
+    getRecord(username).then(record => {
+      socket.emit("update player record", record)
+    })
+  })
   
   socket.on("create game", (username) => {
     createGame(username, socket)
