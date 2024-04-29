@@ -9,6 +9,69 @@ const server = http.createServer(app);
 const port = process.env.PORT || 8080
 const path = require('path');
 
+
+
+// === Github OAuth === //
+
+
+
+
+const axios = require('axios');
+const session = require('express-session');
+
+
+// Session configuration
+app.use(session({
+  secret: 'your_secret_key',  // You should change this secret in a real application
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: !true }  // Set true in production with HTTPS
+}));
+
+// GitHub OAuth configuration
+const CLIENT_ID = 'a0c622956389d806c474';
+const CLIENT_SECRET = 'de1688c57df5666cde927f8198ee9bcc77293e15s';
+const redirectUri = 'http://localhost:8080/auth/github/callback';
+
+app.get('/auth/github', (req, res) => {
+  const authUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&scope=read:user`;
+  res.redirect(authUrl);
+});
+
+app.get('/auth/github/callback', async (req, res) => {
+  const { code } = req.query;
+  if (!code) {
+    return res.status(400).send('Error: No code returned from GitHub OAuth');
+  }
+
+  try {
+    const response = await axios.post('https://github.com/login/oauth/access_token', {
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      code
+    }, {
+      headers: { Accept: 'application/json' }
+    });
+
+    const accessToken = response.data.access_token;
+    req.session.accessToken = accessToken;  // Storing access token in the session
+    res.redirect('http://localhost:3000/home');
+  } catch (error) {
+    console.error('Failed to exchange code for access token:', error);
+    res.status(500).send('Authentication failed');
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server listening at http://localhost:${port}`);
+});
+
+
+
+
+
+
+
 // === DATABASE INTERACTION === //
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
@@ -389,6 +452,3 @@ app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
 });
 
-server.listen(port, () => {
-  console.log(`listening on *:${port}`);
-});
